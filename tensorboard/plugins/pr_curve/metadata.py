@@ -24,8 +24,11 @@ from tensorboard.plugins.pr_curve import plugin_data_pb2
 
 PLUGIN_NAME = 'pr_curves'
 
-# Indices for obtaining precision and recall values from the tensor
-# stored in a summary.
+# Indices for obtaining various values from the tensor stored in a summary.
+TRUE_POSITIVES_INDEX = 0
+FALSE_POSITIVES_INDEX = 1
+TRUE_NEGATIVES_INDEX = 2
+FALSE_NEGATIVES_INDEX = 3
 PRECISION_INDEX = 4
 RECALL_INDEX = 5
 
@@ -68,6 +71,7 @@ def parse_plugin_metadata(content):
   # is a bytestring, and raise a ValueError otherwise...but only after
   # converting `PluginData`'s `content` field to have type `bytes`
   # instead of `string`.
+  tf.logging.warn('content: %r', content)
   result.ParseFromString(tf.compat.as_bytes(content))
   if result.version == 0:
     return result

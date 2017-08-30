@@ -88,8 +88,17 @@ class PrCurvesPlugin(base_plugin.TBPlugin):
         raise ValueError(
             'No PR curves could be fetched for run %r and tag %r' % (run, tag))
 
-      response_mapping[run] = [
-          self._process_tensor_event(e) for e in tensor_events]
+      # Obtain information specific to this plugin.
+      pr_curve_data = metadata.parse_plugin_metadata(
+          self._multiplexer.SummaryMetadata(run, tag).plugin_data.content)
+      thresholds = [
+          float(v) / pr_curve_data.num_thresholds
+          for v in range(0, pr_curve_data.num_thresholds + 1)]
+
+      response_mapping[run] = {
+        'events': [self._process_tensor_event(e) for e in tensor_events],
+        'thresholds': thresholds,
+      }
     return response_mapping
 
   @wrappers.Request.application
@@ -123,10 +132,11 @@ class PrCurvesPlugin(base_plugin.TBPlugin):
     mapping = self._multiplexer.PluginRunToTagToContent(metadata.PLUGIN_NAME)
     for (run, tag_to_content) in six.iteritems(mapping):
       for (tag, _) in six.iteritems(tag_to_content):
-        summary_metadata = self._multiplexer.SummaryMetadata(run, tag)
-        result[run][tag] = {'displayName': summary_metadata.display_name,
-                            'description': plugin_util.markdown_to_safe_html(
-                                summary_metadata.summary_description)}
+        result[run][tag] = {
+            'displayName': summary_metadata.display_name,
+            'description': plugin_util.markdown_to_safe_html(
+                summary_metadata.summary_description),
+        }
 
     return result
 
@@ -219,4 +229,8 @@ class PrCurvesPlugin(base_plugin.TBPlugin):
         'step': event.step,
         'precision': data_array[metadata.PRECISION_INDEX].tolist(),
         'recall': data_array[metadata.RECALL_INDEX].tolist(),
+        'true_positives': data_array[metadata.TRUE_POSITIVES_INDEX].tolist(),
+        'false_positives': data_array[metadata.FALSE_POSITIVES_INDEX].tolist(),
+        'true_negatives': data_array[metadata.TRUE_NEGATIVES_INDEX].tolist(),
+        'false_negatives': data_array[metadata.FALSE_NEGATIVES_INDEX].tolist(),
     }

@@ -257,9 +257,37 @@ limitations under the License.
               {
                 title: 'Recall',
                 evaluate: (d) => formatValueOrNaN(d.datum.recall),
+              },
+              {
+                title: 'True Positives',
+                evaluate: (d) => d.datum.true_positives,
+              },
+              {
+                title: 'False Positives',
+                evaluate: (d) => d.datum.false_positives,
+              },
+              {
+                title: 'True Negatives',
+                evaluate: (d) => d.datum.true_negatives,
+              },
+              {
+                title: 'False Negatives',
+                evaluate: (d) => d.datum.false_negatives,
               }];
           },
-        }
+        },
+        _seriesDataFields: {
+          type: Array,
+          value: [
+            'precision',
+            'recall',
+            'true_positives',
+            'false_positives',
+            'true_negatives',
+            'false_negatives'
+          ],
+          readOnly: true,
+        },
       },
       observers: [
         'reload(runs, tag)',
@@ -333,13 +361,15 @@ limitations under the License.
         // by the variable on the X axis. If the values are not in order,
         // tooltips will not work because the tooltip will always be stuck on
         // one side of the chart.
-        const precision = entryForOneStep.precision.slice().reverse();
-        const recall = entryForOneStep.recall.slice().reverse();
-        const seriesData = _.zipWith(
-            precision, recall, (precision, recall) => ({
-              precision: precision,
-              recall: recall,
-            }));
+        const fieldsToData = {};
+        _.forEach(this._seriesDataFields, field => {
+          fieldsToData[field] = entryForOneStep[field].slice().reverse();
+        });
+
+        const seriesData = new Array(entryForOneStep.thresholds.length);
+        for (let i = 0; i < seriesData.length; i++) {
+          seriesData[i] = _.mapValues(fieldsToData, (values, _) => values[i]);
+        }
         this.$$('vz-line-chart').setSeriesData(run, seriesData);
       },
       _clearSeriesData(run) {
@@ -355,7 +385,7 @@ limitations under the License.
       },
       _updateRunToPrCurveEntry(runToDataOverTime, runToStepCap) {
         const runToEntry = {};
-        _.forOwn(runToDataOverTime, (entries, run) => {
+        _.forOwn(runToDataOverTime.events, (entries, run) => {
           if (!entries || !entries.length) {
             return;
           }
