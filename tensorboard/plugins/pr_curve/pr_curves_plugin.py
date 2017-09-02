@@ -92,7 +92,7 @@ class PrCurvesPlugin(base_plugin.TBPlugin):
       pr_curve_data = metadata.parse_plugin_metadata(content)
       thresholds = [
           float(v) / pr_curve_data.num_thresholds
-          for v in range(0, pr_curve_data.num_thresholds + 1)]
+          for v in range(1, pr_curve_data.num_thresholds + 1)]
 
       response_mapping[run] = [
           self._process_tensor_event(e, thresholds) for e in tensor_events]
