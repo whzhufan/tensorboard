@@ -236,5 +236,5 @@ class PrCurvesPlugin(base_plugin.TBPlugin):
         'false_positives': data_array[metadata.FALSE_POSITIVES_INDEX].tolist(),
         'true_negatives': data_array[metadata.TRUE_NEGATIVES_INDEX].tolist(),
         'false_negatives': data_array[metadata.FALSE_NEGATIVES_INDEX].tolist(),
-        'threshold': thresholds,
+        'thresholds': thresholds,
     }

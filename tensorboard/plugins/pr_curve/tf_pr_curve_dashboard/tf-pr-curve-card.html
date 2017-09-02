@@ -366,10 +366,13 @@ limitations under the License.
         // by the variable on the X axis. If the values are not in order,
         // tooltips will not work because the tooltip will always be stuck on
         // one side of the chart.
-        const fieldsToData = {};
-        _.forEach(this._seriesDataFields, field => {
-          fieldsToData[field] = entryForOneStep[field].slice().reverse();
-        });
+        const fieldsToData = _.reduce(
+            this._seriesDataFields,
+            (result, field) => {
+              result[field] = entryForOneStep[field].slice().reverse();
+              return result;
+            },
+            {});
 
         // The number of series data is equal to the number of entries in any of
         // the fields. We just use the first field to gauge the length.
