@@ -71,7 +71,6 @@ def parse_plugin_metadata(content):
   # is a bytestring, and raise a ValueError otherwise...but only after
   # converting `PluginData`'s `content` field to have type `bytes`
   # instead of `string`.
-  tf.logging.warn('content: %r', content)
   result.ParseFromString(tf.compat.as_bytes(content))
   if result.version == 0:
     return result

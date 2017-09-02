@@ -251,6 +251,10 @@ limitations under the License.
                 evaluate: (d) => d.dataset.metadata().name,
               },
               {
+                title: 'Threshold',
+                evaluate: (d) => formatValueOrNaN(d.datum.threshold),
+              },
+              {
                 title: 'Precision',
                 evaluate: (d) => formatValueOrNaN(d.datum.precision),
               },
@@ -259,19 +263,19 @@ limitations under the License.
                 evaluate: (d) => formatValueOrNaN(d.datum.recall),
               },
               {
-                title: 'True Positives',
+                title: 'TP',
                 evaluate: (d) => d.datum.true_positives,
               },
               {
-                title: 'False Positives',
+                title: 'FP',
                 evaluate: (d) => d.datum.false_positives,
               },
               {
-                title: 'True Negatives',
+                title: 'TN',
                 evaluate: (d) => d.datum.true_negatives,
               },
               {
-                title: 'False Negatives',
+                title: 'FN',
                 evaluate: (d) => d.datum.false_negatives,
               }];
           },
@@ -279,6 +283,7 @@ limitations under the License.
         _seriesDataFields: {
           type: Array,
           value: [
+            'threshold',
             'precision',
             'recall',
             'true_positives',
@@ -366,7 +371,12 @@ limitations under the License.
           fieldsToData[field] = entryForOneStep[field].slice().reverse();
         });
 
-        const seriesData = new Array(entryForOneStep.thresholds.length);
+        // The number of series data is equal to the number of entries in any of
+        // the fields. We just use the first field to gauge the length.
+        const seriesData = new Array(
+            fieldsToData[this._seriesDataFields[0]].length);
+
+        // Create a list of data to pass to vz-line-chart for visualization.
         for (let i = 0; i < seriesData.length; i++) {
           seriesData[i] = _.mapValues(fieldsToData, (values, _) => values[i]);
         }
@@ -385,11 +395,7 @@ limitations under the License.
       },
       _updateRunToPrCurveEntry(runToDataOverTime, runToStepCap) {
         const runToEntry = {};
-        _.forOwn(runToDataOverTime.events, (entries, run) => {
-          if (!entries || !entries.length) {
-            return;
-          }
-
+        _.forOwn(runToDataOverTime, (entries, run) => {
           runToEntry[run] = this._computeEntryClosestOrEqualToStepCap(
               runToStepCap[run], entries);
         });

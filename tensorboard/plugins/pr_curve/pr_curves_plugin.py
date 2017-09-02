@@ -88,17 +88,14 @@ class PrCurvesPlugin(base_plugin.TBPlugin):
         raise ValueError(
             'No PR curves could be fetched for run %r and tag %r' % (run, tag))
 
-      # Obtain information specific to this plugin.
-      pr_curve_data = metadata.parse_plugin_metadata(
-          self._multiplexer.SummaryMetadata(run, tag).plugin_data.content)
+      content = self._multiplexer.SummaryMetadata(run, tag).plugin_data.content
+      pr_curve_data = metadata.parse_plugin_metadata(content)
       thresholds = [
           float(v) / pr_curve_data.num_thresholds
           for v in range(0, pr_curve_data.num_thresholds + 1)]
 
-      response_mapping[run] = {
-        'events': [self._process_tensor_event(e) for e in tensor_events],
-        'thresholds': thresholds,
-      }
+      response_mapping[run] = [
+          self._process_tensor_event(e, thresholds) for e in tensor_events]
     return response_mapping
 
   @wrappers.Request.application
@@ -132,6 +129,7 @@ class PrCurvesPlugin(base_plugin.TBPlugin):
     mapping = self._multiplexer.PluginRunToTagToContent(metadata.PLUGIN_NAME)
     for (run, tag_to_content) in six.iteritems(mapping):
       for (tag, _) in six.iteritems(tag_to_content):
+        summary_metadata = self._multiplexer.SummaryMetadata(run, tag)
         result[run][tag] = {
             'displayName': summary_metadata.display_name,
             'description': plugin_util.markdown_to_safe_html(
@@ -217,11 +215,16 @@ class PrCurvesPlugin(base_plugin.TBPlugin):
     # The plugin is active if any of the runs has a tag relevant to the plugin.
     return any(six.itervalues(all_runs))
 
-  def _process_tensor_event(self, event):
+  def _process_tensor_event(self, event, thresholds):
     """Converts a TensorEvent into an dict that encapsulates information on it.
 
     Args:
       event: The TensorEvent to convert.
+      thresholds: An array of floats that ranges from 0 to 1 (in that
+        direction).
+
+    Returns:
+      A JSON-able dictionary of PR curve data for 1 step.
     """
     data_array = tf.make_ndarray(event.tensor_proto)
     return {
@@ -233,4 +236,5 @@ class PrCurvesPlugin(base_plugin.TBPlugin):
         'false_positives': data_array[metadata.FALSE_POSITIVES_INDEX].tolist(),
         'true_negatives': data_array[metadata.TRUE_NEGATIVES_INDEX].tolist(),
         'false_negatives': data_array[metadata.FALSE_NEGATIVES_INDEX].tolist(),
+        'threshold': thresholds,
     }
