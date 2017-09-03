@@ -90,9 +90,9 @@ class PrCurvesPlugin(base_plugin.TBPlugin):
 
       content = self._multiplexer.SummaryMetadata(run, tag).plugin_data.content
       pr_curve_data = metadata.parse_plugin_metadata(content)
+      max_value = float(pr_curve_data.num_thresholds - 1)
       thresholds = [
-          float(v) / pr_curve_data.num_thresholds
-          for v in range(1, pr_curve_data.num_thresholds + 1)]
+          float(v) / max_value for v in range(0, pr_curve_data.num_thresholds)]
 
       response_mapping[run] = [
           self._process_tensor_event(e, thresholds) for e in tensor_events]
